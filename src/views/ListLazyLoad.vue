@@ -4,7 +4,7 @@
     style="width: 80%; margin: 0 auto"
     max-height="250"
     v-infinite-scroll="loadMore"
-    infinite-scroll-disabled="busy"
+    infinite-scroll-disabled="isBusy"
     infinite-scroll-distance="10"
   >
     <el-table-column prop="id" label="序号" width="100"> </el-table-column>
@@ -26,7 +26,7 @@ export default {
   data() {
     return {
       tableData: [],
-      busy: false,
+      isBusy: false,
     };
   },
   components: {},
@@ -37,13 +37,13 @@ export default {
 
     loadMore() {
       console.log('load more');
-      this.busy = true;
+      this.isBusy = true;
 
       setTimeout(() => {
         for (let i = 0, j = 10; i < j; i += 1) {
           this.tableData.push({ id: 111 });
         }
-        // this.busy = false;
+        // this.isBusy = false;
       }, 1000);
     },
   },

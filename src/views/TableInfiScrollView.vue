@@ -4,7 +4,7 @@
     style="width: 80%; margin: 0 auto"
     max-height="250"
     v-infinite-scroll="loadMore"
-    infinite-scroll-disabled="busy"
+    infinite-scroll-disabled="isBusy"
     infinite-scroll-distance="10"
   >
     <el-table-column prop="id" label="序号" width="100"> </el-table-column>
@@ -16,35 +16,38 @@
 </template>
 
 <script>
-// import { findAll } from '@/mock/index';
+import { findByPagination } from '@/mock/index';
 
 export default {
   name: 'TableInfiScrollView',
   data() {
     return {
       tableData: [],
-      busy: false,
+      page: {
+        pagination: 0,
+        pageSize: 5,
+      },
+      isBusy: false,
     };
   },
   components: {},
   created() {
-    // this.renderTable();
+    this.appendToTable(this.page.pagination, this.page.pageSize);
   },
   methods: {
-    // renderTable() {
-    // const { data: { list } } = findAll(5);
-    // this.tableData = list;
-    // },
     loadMore() {
       console.log('load more');
-      this.busy = true;
+      this.isBusy = true;
 
       setTimeout(() => {
-        for (let i = 0, j = 10; i < j; i += 1) {
-          this.tableData.push({ id: 111 });
-        }
-        this.busy = false;
+        this.appendToTable(this.page.pagination, this.page.pageSize);
+        this.isBusy = false;
       }, 1000);
+    },
+    appendToTable(pagination = 0, pageSize = 5) {
+      const newData = findByPagination(pagination, pageSize).data.list;
+      this.tableData = [...this.tableData, ...newData];
+      this.page.pagination += 1;
     },
   },
 };

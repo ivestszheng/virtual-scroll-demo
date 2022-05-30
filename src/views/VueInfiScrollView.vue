@@ -2,60 +2,48 @@
   <div
     class="container"
     v-infinite-scroll="loadMore"
-    infinite-scroll-disabled="busy"
+    infinite-scroll-disabled="isBusy"
     infinite-scroll-distance="10"
   >
     <div class="content" v-for="(item,index) in shownlist" :key="index">
       <div style="width: 100%;height: 1rem;">{{item.id}}</div>
     </div>
-    <div class="loading" v-show="busy">loading.....</div>
+    <div class="loading" v-show="isBusy">loading.....</div>
   </div>
 </template>
 
 <script>
-import generageList from '@/mock/index';
+import { findByPagination } from '@/mock/index';
 
 export default {
   name: 'TableInfiScrollView',
   data() {
     return {
-      dataSource: [],
       shownlist: [],
-      busy: false,
+      isBusy: false,
       page: {
         pagination: 0,
-        pageSize: 10,
+        pageSize: 5,
       },
     };
   },
   created() {
-    this.dataSource = generageList(100).data.list;
     this.appedToShownList(this.page.pagination, this.page.pageSize);
   },
   methods: {
     loadMore() {
-      this.busy = true;
+      this.isBusy = true;
       console.log(`loading... ${new Date()}`);
 
       setTimeout(() => {
         console.log(`end... ${new Date()}`);
         this.appedToShownList(this.page.pagination, this.page.pageSize);
-        this.busy = false;
+        this.isBusy = false;
       }, 500);
     },
     appedToShownList(pagination = 0, pageSize = 5) {
-      const beginIndex = pagination * pageSize;
-      const endIndex = beginIndex + pageSize;
-
-      if (endIndex > this.dataSource.length) {
-        const { data: { list } } = generageList(100, this.dataSource.length + 1);
-        this.dataSource = [...this.dataSource, ...list];
-      }
-      const targetList = this.dataSource.slice(beginIndex, endIndex);
-
-      targetList.forEach((item) => {
-        this.shownlist.push(item);
-      });
+      const newData = findByPagination(pagination, pageSize).data.list;
+      this.shownlist = [...this.shownlist, ...newData];
       this.page.pagination += 1;
     },
   },
