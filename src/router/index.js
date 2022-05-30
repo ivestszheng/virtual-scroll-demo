@@ -18,6 +18,11 @@ const routes = [
     // which is lazy-loaded when the route is visited.
     component: () => import(/* webpackChunkName: "about" */ '../views/AboutView.vue'),
   },
+  {
+    path: '/table-infinite-scroll',
+    name: 'TableInfiniteScroll',
+    component: () => import('@/views/TableInfiScrollView.vue'),
+  },
 ];
 
 const router = new VueRouter({
