@@ -1,5 +1,5 @@
 <template>
-  <el-table
+  <!-- <el-table
     :data="tableData"
     style="width: 80%; margin: 0 auto"
     max-height="250"
@@ -12,12 +12,15 @@
     <el-table-column prop="readTimes" label="阅读次数"> </el-table-column>
     <el-table-column prop="source" label="来源"> </el-table-column>
     <el-table-column prop="date" label="日期"> </el-table-column>
-  </el-table>
+  </el-table> -->
+  <div>
+    <!-- <div v-for="(item,index) in tableData" :key="index">
+
+    </div> -->
+  </div>
 </template>
 
 <script>
-// import { findAll } from '@/mock/index';
-
 export default {
   name: 'TableInfiScrollView',
   data() {
@@ -28,13 +31,10 @@ export default {
   },
   components: {},
   created() {
-    // this.renderTable();
+    console.log(123);
   },
   methods: {
-    // renderTable() {
-    // const { data: { list } } = findAll(5);
-    // this.tableData = list;
-    // },
+
     loadMore() {
       console.log('load more');
       this.busy = true;
@@ -43,7 +43,7 @@ export default {
         for (let i = 0, j = 10; i < j; i += 1) {
           this.tableData.push({ id: 111 });
         }
-        this.busy = false;
+        // this.busy = false;
       }, 1000);
     },
   },

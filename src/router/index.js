@@ -11,17 +11,19 @@ const routes = [
     component: HomeView,
   },
   {
-    path: '/about',
-    name: 'about',
-    // route level code-splitting
-    // this generates a separate chunk (about.[hash].js) for this route
-    // which is lazy-loaded when the route is visited.
-    component: () => import(/* webpackChunkName: "about" */ '../views/AboutView.vue'),
+    path: '/list-lazy-load',
+    name: 'ListLazyLoad',
+    component: () => import('@/views/ListLazyLoad.vue'),
   },
   {
     path: '/table-infinite-scroll',
     name: 'TableInfiniteScroll',
     component: () => import('@/views/TableInfiScrollView.vue'),
+  },
+  {
+    path: '/vue-infi-scroll',
+    name: 'VueInfiScroll',
+    component: () => import('@/views/VueInfiScrollView.vue'),
   },
 ];
 

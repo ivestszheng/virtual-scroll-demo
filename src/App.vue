@@ -2,8 +2,9 @@
   <div id="app">
     <nav>
       <router-link to="/">Home</router-link> |
-      <router-link to="/about">About</router-link> |
-      <router-link to="/table-infinite-scroll">虚拟滚动</router-link>
+      <router-link to="/list-lazy-load">列表懒加载</router-link> |
+      <router-link to="/vue-infi-scroll">vue-infinite-scroll实现懒加载使用</router-link> |
+      <router-link to="/table-infinite-scroll">表格虚拟滚动</router-link>
     </nav>
     <router-view/>
   </div>
