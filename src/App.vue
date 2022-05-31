@@ -1,8 +1,9 @@
 <template>
   <div id="app">
     <nav>
-      <router-link to="/vue-infi-scroll">vue-infinite-scroll 实现列表懒加载</router-link> |
+      <router-link to="/vue-infi-scroll">VueInfiniteScroller 实现列表懒加载</router-link> |
       <router-link to="/table-lazyload">自定义指令实现饿了么表格懒加载</router-link> |
+      <router-link to="/vue-virtual-scroll">VueVirtualScroller 实现虚拟列表</router-link> |
     </nav>
     <router-view/>
   </div>

@@ -18,6 +18,11 @@ const routes = [
     name: 'TableLazyLoad',
     component: () => import('@/views/TableLazyLoadView.vue'),
   },
+  {
+    path: '/vue-virtual-scroll',
+    name: 'VueVirtualScroller',
+    component: () => import('@/views/VueVirtualScrollerView.vue'),
+  },
 ];
 
 const router = new VueRouter({

@@ -13,7 +13,8 @@
     "mockjs": "^1.1.0",
     "vue": "^2.6.14",
     "vue-infinite-scroll": "^2.0.2",
-    "vue-router": "^3.5.1"
+    "vue-router": "^3.5.1",
+    "vue-virtual-scroller": "^1.0.10"
   },
   "devDependencies": {
     "@babel/core": "^7.12.16",
