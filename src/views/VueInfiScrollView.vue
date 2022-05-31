@@ -16,7 +16,7 @@
 import { findByPagination } from '@/mock/index';
 
 export default {
-  name: 'TableInfiScrollView',
+  name: 'VueInfiScrollView',
   data() {
     return {
       shownlist: [],
