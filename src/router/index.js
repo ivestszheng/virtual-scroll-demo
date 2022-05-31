@@ -16,9 +16,9 @@ const routes = [
     component: () => import('@/views/ListLazyLoad.vue'),
   },
   {
-    path: '/table-infinite-scroll',
-    name: 'TableInfiniteScroll',
-    component: () => import('@/views/TableInfiScrollView.vue'),
+    path: '/table-lazyload',
+    name: 'TableLazyLoad',
+    component: () => import('@/views/TableLazyLoadView.vue'),
   },
   {
     path: '/vue-infi-scroll',

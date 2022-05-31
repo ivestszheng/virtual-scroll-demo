@@ -4,6 +4,7 @@ import infiniteScroll from 'vue-infinite-scroll';
 import App from './App.vue';
 import 'element-ui/lib/theme-chalk/index.css';
 import router from './router';
+import '@/directives/index';
 
 Vue.config.productionTip = false;
 Vue.use(ElementUI);
