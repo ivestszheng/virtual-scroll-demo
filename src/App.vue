@@ -1,9 +1,11 @@
 <template>
   <div id="app">
     <nav>
-      <router-link to="/vue-infi-scroll">VueInfiniteScroller 实现列表懒加载</router-link> |
-      <router-link to="/table-lazyload">自定义指令实现饿了么表格懒加载</router-link> |
-      <router-link to="/vue-virtual-scroll">VueVirtualScroller 实现虚拟列表</router-link> |
+      <router-link to="/vue-infi-scroller">VueInfiniteScroller 实现列表无限滚动</router-link> |
+      <router-link to="/table-infi-scroller">自定义指令实现饿了么表格无限滚动</router-link> |
+      <router-link to="/my-own-infi-scroller">自已实现列表无限滚动</router-link> |
+      <router-link to="/vue-virtual-scroller">VueVirtualScroller 实现虚拟滚动</router-link> |
+      <router-link to="/table-virtual-scroller">饿了么表格实现虚拟滚动</router-link> |
     </nav>
     <router-view/>
   </div>

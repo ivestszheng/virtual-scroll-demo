@@ -25,6 +25,11 @@ export default {
   created() {
     this.list = generageList(1000).data;
   },
+  computed: {
+    virtualList() {
+      return [];
+    },
+  },
 };
 </script>
 

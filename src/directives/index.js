@@ -12,9 +12,11 @@
 //   },
 // });
 import eltableLoad from './el-table-load';
+import eltableVirtualScroll from './el-table-virtual-scroller';
 
 const directives = {
   eltableLoad,
+  eltableVirtualScroll,
 };
 
 export default {
