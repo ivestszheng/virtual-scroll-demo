@@ -4,7 +4,7 @@
       :data="tableData"
       style="width: 80%; margin: 0 auto"
       max-height="250"
-      v-el-table-load="loadMore"
+      v-eltable-load="loadMore"
     >
       <el-table-column prop="id" label="序号" width="100"> </el-table-column>
       <el-table-column prop="title" label="标题"> </el-table-column>
