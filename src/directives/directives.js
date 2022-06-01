@@ -11,4 +11,15 @@ const eltableLoad = {
   },
 };
 
-export default eltableLoad;
+const eltableVirtualScroll = {
+  bind: (el) => {
+    const selectWrap = el.querySelector('.el-table__body-wrapper');
+
+    selectWrap.addEventListener('scroll', function () {
+      console.log('virtual scroll', el);
+      console.log(this.scrollTop);
+    });
+  },
+};
+
+export { eltableLoad, eltableVirtualScroll };

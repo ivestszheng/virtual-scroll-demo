@@ -1,6 +1,7 @@
 <template>
   <div
     class="container"
+    ref="container"
   >
     <div class="content" v-for="(item,index) in shownlist" :key="index">
       <div style="width: 100%;height: 1rem;">{{item.id}}</div>
@@ -26,6 +27,24 @@ export default {
   },
   created() {
     this.appedToShownList(this.page.pagination, this.page.pageSize);
+  },
+  mounted() {
+    const obj = this.$refs.container;
+    const that = this;
+
+    // eslint-disable-next-line func-names
+    obj.addEventListener('scroll', function () {
+      if (this.scrollHeight - this.scrollTop <= this.clientHeight && that.isBusy === false) {
+        // isBusy 实现防抖
+        console.log('到底部了');
+        that.isBusy = true;
+
+        setTimeout(() => {
+          that.appedToShownList(that.page.pagination, that.page.pageSize);
+          that.isBusy = false;
+        }, 1000);
+      }
+    });
   },
   methods: {
     loadMore() {

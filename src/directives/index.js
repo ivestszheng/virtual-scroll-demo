@@ -11,8 +11,7 @@
 //     });
 //   },
 // });
-import eltableLoad from './el-table-load';
-import eltableVirtualScroll from './el-table-virtual-scroller';
+import { eltableLoad, eltableVirtualScroll } from './directives';
 
 const directives = {
   eltableLoad,
