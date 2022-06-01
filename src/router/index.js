@@ -33,6 +33,11 @@ const routes = [
     name: 'MyOwnInfiScroller',
     component: () => import('@/views/MyOwnInfiScrollerView.vue'),
   },
+  {
+    path: '/my-own-virtual-scroller',
+    name: 'MyOwnVirtualScroller',
+    component: () => import('@/views/MyOwnVirtualScrollerView.vue'),
+  },
 ];
 
 const router = new VueRouter({
