@@ -18,10 +18,25 @@ export default {
   data() {
     return {
       shownlist: [],
+      itemHeight: 80, // 列表每项内容的高度
+      maxVolume: 0, //  容器的最大容积
     };
   },
   created() {
     this.shownlist = generageList(1000).data;
+  },
+  mounted() {
+    this.getMaxVolume();
+    // 如果列表的高度并非固定，而是会随着当视口变化，需要增加监听事件
+    // window.onresize = () => this.getMaxVolume();
+    // window.orientationchange = () => this.getMaxVolume();
+  },
+  methods: {
+    // 计算容器的最大容积
+    getMaxVolume() {
+      this.maxVolume = Math.floor(this.$refs.container.clientHeight / this.itemHeight) + 2;
+      console.log(this.maxVolume);
+    },
   },
 };
 </script>
@@ -37,8 +52,9 @@ export default {
 .content {
   border: 1px solid orange;
   width: 80%;
-  margin: 0 auto 2% auto;
-  height: 18%;
+  margin: 0 auto;
+  height: 80px;
+  box-sizing: border-box;
   display: flex;
   align-items: center;
   justify-content: center;

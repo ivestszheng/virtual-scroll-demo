@@ -4,7 +4,7 @@ const eltableLoad = {
     const selectWrap = el.querySelector('.el-table__body-wrapper');
 
     selectWrap.addEventListener('scroll', function () {
-      if (this.scrollHeight - this.scrollTop <= this.clientHeight) {
+      if (Math.floor(this.scrollHeight - this.scrollTop) <= this.clientHeight) {
         binding.value();
       }
     });

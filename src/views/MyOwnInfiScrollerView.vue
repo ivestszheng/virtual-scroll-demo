@@ -34,7 +34,12 @@ export default {
 
     // eslint-disable-next-line func-names
     obj.addEventListener('scroll', function () {
-      if (this.scrollHeight - this.scrollTop <= this.clientHeight && that.isBusy === false) {
+      console.log('scrollHeight', this.scrollHeight);
+      console.log('scrollTop', this.scrollTop);
+      console.log('clientHeight', this.clientHeight);
+      // 向下取整，解决chrome中scrollTop可以为小数的问题
+      if (Math.floor(this.scrollHeight - this.scrollTop) === this.clientHeight
+      && that.isBusy === false) {
         // isBusy 实现防抖
         console.log('到底部了');
         that.isBusy = true;
@@ -77,7 +82,7 @@ export default {
 .content {
   border: 1px solid orange;
   width: 80%;
-  margin: 0 auto 2% auto;
+  margin: 0 auto 8.1px auto;
   height: 18%;
 }
 .loading {

@@ -1,6 +1,7 @@
 <template>
   <div>
     <el-table
+    ref="table"
       :data="tableData"
       style="width: 80%; margin: 0 auto"
       max-height="250"
@@ -33,6 +34,9 @@ export default {
   components: {},
   created() {
     this.appendToTable(this.page.pagination, this.page.pageSize);
+  },
+  mounted() {
+    console.log(this.$refs.table);
   },
   methods: {
     loadMore() {
