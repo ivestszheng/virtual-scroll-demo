@@ -223,6 +223,8 @@ export default {
 
 上面的案例都是在自己创建的列表，还有比较常见的是需要组件库中的表格组件实现懒加载，这里以 `element-ui`的 `table`为例。
 
+![table 无限滚动](https://raw.githubusercontent.com/ivestszheng/images-store/master/img/table 无限滚动.gif)
+
 大体的思路与上面的实现一致，不过需要需要获取正确的容器——选择器为 `.el-table__body-wrapper`的 `div`。考虑到复用性，使用了自定义指令，具体代码如下：
 
 ```js
@@ -277,14 +279,16 @@ export default {
     this.appendToTable(this.page.pagination, this.page.pageSize);
   },
   methods: {
-    loadMore() {
-      console.log('load more');
-      this.isBusy = true;
+     loadMore() {
+      if (!this.isBusy) {
+        console.log('load more');
+        this.isBusy = true;
 
-      setTimeout(() => {
-        this.appendToTable(this.page.pagination, this.page.pageSize);
-        this.isBusy = false;
-      }, 1000);
+        setTimeout(() => {
+          this.appendToTable(this.page.pagination, this.page.pageSize);
+          this.isBusy = false;
+        }, 500);
+      }
     },
     appendToTable(pagination = 0, pageSize = 5) {
       const newData = findByPagination(pagination, pageSize).data.list;

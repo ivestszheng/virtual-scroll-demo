@@ -40,13 +40,15 @@ export default {
   },
   methods: {
     loadMore() {
-      console.log('load more');
-      this.isBusy = true;
+      if (!this.isBusy) {
+        console.log('load more');
+        this.isBusy = true;
 
-      setTimeout(() => {
-        this.appendToTable(this.page.pagination, this.page.pageSize);
-        this.isBusy = false;
-      }, 1000);
+        setTimeout(() => {
+          this.appendToTable(this.page.pagination, this.page.pageSize);
+          this.isBusy = false;
+        }, 500);
+      }
     },
     appendToTable(pagination = 0, pageSize = 5) {
       const newData = findByPagination(pagination, pageSize).data.list;
