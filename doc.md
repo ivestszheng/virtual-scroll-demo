@@ -22,24 +22,24 @@
 
 ### 懒加载
 
-当页面滚动到底部时，进行下一页内容的查询并将结果添加到结果列表中，这就是懒加载。在这种场景下，列表中的`dom`元素数量是累加的。
+当页面滚动到底部时，进行下一页内容的查询并将结果添加到结果列表中，这就是懒加载。在这种场景下，列表中的 `dom`元素数量是累加的。
 
 ### 虚拟滚动
 
-虚拟滚动（也叫虚拟列表），尽管在表现形式上与懒加载相似，但列表中展示的`dom`元素数量实际是固定的。
+虚拟滚动（也叫虚拟列表），尽管在表现形式上与懒加载相似，但列表中展示的 `dom`元素数量实际是固定的。
 
 ## 无限下拉之懒加载的实现
 
 ### Vue中原生实现
 
-前面说了懒加载的触发条件是**页面滚动到底部**。判断滚动条到底部，需要用到DOM的三个属性值，即`scrollTop`、`clientHeight`、`scrollHeight`。
+前面说了懒加载的触发条件是**页面滚动到底部**。判断滚动条到底部，需要用到DOM的三个属性值，即 `scrollTop`、`clientHeight`、`scrollHeight`。
 
 简单来说，`scrollTop`为滚动条在Y轴上的滚动距离；`clientHeight`为内容可视区域的高度；`scrollHeight`为内容可视区域的高度加上溢出（滚动）的距离。具体如下图所示：
 ![scrollTop,clientHeight,scrollHeight](https://raw.githubusercontent.com/ivestszheng/images-store/master/img/20220604173029.png)
 
 所以可推得页面滚动到底部的条件为 `Math.floor(scrollHeight - scrollTop) === clientHeight`。
 
-之所以用到向下取整是因为`scrollHeight`可能是小数。在`chrome`中会存在这样一种情况——假设`scrollHeight`为`501`，`clientHeight`为`500`，拖到底部`scrollTop`只有零点几。
+之所以用到向下取整是因为 `scrollHeight`可能是小数。在 `chrome`中会存在这样一种情况——假设 `scrollHeight`为 `501`，`clientHeight`为 `500`，拖到底部 `scrollTop`只有零点几。
 ![懒加载原生实现](https://raw.githubusercontent.com/ivestszheng/images-store/master/img/%E5%8A%A8%E7%94%BB.gif)
 完整代码如下：
 
@@ -221,9 +221,9 @@ export default {
 
 ### 在element-ui Table组件中的实现
 
-上面的案例都是在自己创建的列表，还有比较常见的是需要组件库中的表格组件实现懒加载，这里以`element-ui`的`table`为例。
+上面的案例都是在自己创建的列表，还有比较常见的是需要组件库中的表格组件实现懒加载，这里以 `element-ui`的 `table`为例。
 
-大体的思路与上面的实现一致，不过需要需要获取正确的容器——选择器为`.el-table__body-wrapper`的`div`。考虑到复用性，使用了自定义指令，具体代码如下：
+大体的思路与上面的实现一致，不过需要需要获取正确的容器——选择器为 `.el-table__body-wrapper`的 `div`。考虑到复用性，使用了自定义指令，具体代码如下：
 
 ```js
 const eltableLoad = {
@@ -297,7 +297,7 @@ export default {
 
 ```
 
-这里的实现比较简单，当`table`到底部时会调用`v-eltable-load`绑定的方法。我其实是想将防抖的操作也以自定义指令的形式来实现，像`vue-infinite-scroll`一样。但我不知道一个指令是如何获得另一个指令的入参的，希望有大佬可以指点一下。
+这里的实现比较简单，当 `table`到底部时会调用 `v-eltable-load`绑定的方法。我其实是想将防抖的操作也以自定义指令的形式来实现，像 `vue-infinite-scroll`一样。但我不知道一个指令是如何获得另一个指令的入参的，希望有大佬可以指点一下。
 
 ## 无限下拉之虚拟滚动的实现
 
@@ -309,8 +309,6 @@ export default {
 
 可以看到视口高度是固定的，子元素的高度也是固定的，我们可以推算出一个视口最多可以看到多少个元素。只需改变列表中元素的上下间距即可实现虚拟滚动的效果。
 
-
-
 ### 实现的整体思路
 
 1. 计算容器最大容积数量
@@ -320,7 +318,7 @@ export default {
 
 ### 计算容器最大容积数量
 
-在列表内容等高的情况下，容器最大容积数量 = Math.floor(容器的高度 / 列表每项内容的高度) + 2。之所以要`+2` 是因为视口中第一项和最后一项可能并不完整，如下图所示：
+在列表内容等高的情况下，容器最大容积数量 = Math.floor(容器的高度 / 列表每项内容的高度) + 2。之所以要 `+2` 是因为视口中第一项和最后一项可能并不完整，如下图所示：
 
 ![计算容器最大容积数量1](https://raw.githubusercontent.com/ivestszheng/images-store/master/img/image-20220605220258304.png)
 
@@ -400,6 +398,76 @@ export default {
 ```
 
 ### 监听滚动事件动态截取数据
+
+监听用户滚动事件，根据滚动位置，动态计算当前可视区域起始数据的索引位置 `beginIndex`，再根据最大容积数量 `maxVolume`，计算结束数据的索引位置 `endIndex`，最后根据 `beginIndex`与 `endIndex`截取长列表需宣显示的数据,代码修改后如下:
+
+```vue
+<template>
+<!-- .passive 会告诉浏览器你不想阻止事件的默认行为,以提高性能 -->
+  <div class="container" ref="container" @scroll.passive="handleScroll">
+    <div class="content" v-for="(item, index) in shownList" :key="index">
+      <div class="content-item">{{ item.id }}</div>
+      <div class="content-item">{{ item.title }}</div>
+      <div class="content-item">{{ item.readTimes }}</div>
+      <div class="content-item">{{ item.source }}</div>
+      <div class="content-item">{{ item.date }}</div>
+    </div>
+  </div>
+</template>
+
+<script>
+import { generageList } from '@/mock/index';
+
+export default {
+  name: 'MyOwnVirtualScrollerView',
+  data() {
+    return {
+      dataSource: [], // 数据源
+      itemHeight: 80, // 列表每项内容的高度
+      maxVolume: 0, //  容器的最大容积
+      beginIndex: 0, // 当前滚动的第一个元素索引
+    };
+  },
+  computed: {
+    // 当前滚动的最后一个元素索引
+    endIndex() {
+      let endIndex = this.beginIndex + this.maxVolume;
+      if (!this.dataSource[endIndex]) {
+        endIndex = this.dataSource.length - 1;
+      }
+      return endIndex;
+    },
+    // 列表中要展示的元素集合
+    shownList() {
+      return this.dataSource.slice(this.beginIndex, this.endIndex);
+    },
+  },
+  created() {
+    this.dataSource = generageList(1000).data;
+  },
+  mounted() {
+    this.getMaxVolume();
+    // 如果列表的高度并非固定，而是会随着当视口变化，需要增加监听事件
+    // window.onresize = () => this.getMaxVolume();
+    // window.orientationchange = () => this.getMaxVolume();
+  },
+  methods: {
+    // 计算容器的最大容积
+    getMaxVolume() {
+      this.maxVolume = Math.floor(this.$refs.container.clientHeight / this.itemHeight) + 2;
+      console.log(this.maxVolume);
+    },
+    // 滚动行为事件,记录滚动的第一个元素索引
+    handleScroll() {
+      this.beginIndex = Math.floor(this.$refs.container.scrollTop / this.itemHeight);
+      console.log('benginIndex', this.beginIndex);
+    },
+  },
+};
+</script>
+```
+
+### 动态设置上下空白占位
 
 ## 无限下拉存在的问题与优化思路
 

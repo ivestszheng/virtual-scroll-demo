@@ -1,6 +1,7 @@
 <template>
-  <div class="container" ref="container">
-    <div class="content" v-for="(item, index) in shownlist" :key="index">
+<!-- .passive 会告诉浏览器你不想阻止事件的默认行为,以提高性能 -->
+  <div class="container" ref="container" @scroll.passive="handleScroll">
+    <div class="content" v-for="(item, index) in shownList" :key="index">
       <div class="content-item">{{ item.id }}</div>
       <div class="content-item">{{ item.title }}</div>
       <div class="content-item">{{ item.readTimes }}</div>
@@ -17,13 +18,28 @@ export default {
   name: 'MyOwnVirtualScrollerView',
   data() {
     return {
-      shownlist: [],
+      dataSource: [], // 数据源
       itemHeight: 80, // 列表每项内容的高度
       maxVolume: 0, //  容器的最大容积
+      beginIndex: 0, // 当前滚动的第一个元素索引
     };
   },
+  computed: {
+    // 当前滚动的最后一个元素索引
+    endIndex() {
+      let endIndex = this.beginIndex + this.maxVolume;
+      if (!this.dataSource[endIndex]) {
+        endIndex = this.dataSource.length - 1;
+      }
+      return endIndex;
+    },
+    // 列表中要展示的元素集合
+    shownList() {
+      return this.dataSource.slice(this.beginIndex, this.endIndex);
+    },
+  },
   created() {
-    this.shownlist = generageList(1000).data;
+    this.dataSource = generageList(1000).data;
   },
   mounted() {
     this.getMaxVolume();
@@ -36,6 +52,11 @@ export default {
     getMaxVolume() {
       this.maxVolume = Math.floor(this.$refs.container.clientHeight / this.itemHeight) + 2;
       console.log(this.maxVolume);
+    },
+    // 滚动行为事件,记录滚动的第一个元素索引
+    handleScroll() {
+      this.beginIndex = Math.floor(this.$refs.container.scrollTop / this.itemHeight);
+      console.log('benginIndex', this.beginIndex);
     },
   },
 };
