@@ -34,13 +34,10 @@ export default {
 
     // eslint-disable-next-line func-names
     obj.addEventListener('scroll', function () {
-      console.log('scrollHeight', this.scrollHeight);
-      console.log('scrollTop', this.scrollTop);
-      console.log('clientHeight', this.clientHeight);
       // 向下取整，解决chrome中scrollTop可以为小数的问题
       if (Math.floor(this.scrollHeight - this.scrollTop) === this.clientHeight
       && that.isBusy === false) {
-        // isBusy 实现防抖
+        // isBusy 实现节流
         console.log('到底部了');
         that.isBusy = true;
 
@@ -73,17 +70,17 @@ export default {
 
 <style lang="less" scoped>
 .container {
-  height: 500px;
+  height: 400px;
   border: 1px solid gray;
   width: 600px;
   margin: 0 auto;
-  overflow: auto;
+  overflow-y: auto;
 }
 .content {
   border: 1px solid orange;
   width: 80%;
   margin: 0 auto 8.1px auto;
-  height: 18%;
+  height: 80px;
 }
 .loading {
   font-weight: bold;

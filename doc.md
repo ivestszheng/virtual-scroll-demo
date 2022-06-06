@@ -1,4 +1,4 @@
-# 长列表无限下拉的实现
+# 长列表无限下拉的实现（上）
 
 ## 分页还是无限下拉？
 
@@ -83,7 +83,7 @@ export default {
       // 向下取整，解决chrome中scrollTop可以为小数的问题
       if (Math.floor(this.scrollHeight - this.scrollTop) === this.clientHeight
       && that.isBusy === false) {
-        // isBusy 实现防抖
+        // isBusy 实现节流
         console.log('到底部了');
         that.isBusy = true;
 
@@ -297,7 +297,7 @@ export default {
 
 ```
 
-这里的实现比较简单，当 `table`到底部时会调用 `v-eltable-load`绑定的方法。我其实是想将防抖的操作也以自定义指令的形式来实现，像 `vue-infinite-scroll`一样。但我不知道一个指令是如何获得另一个指令的入参的，希望有大佬可以指点一下。
+这里的实现比较简单，当 `table`到底部时会调用 `v-eltable-load`绑定的方法。我其实是想将节流的操作也以自定义指令的形式来实现，像 `vue-infinite-scroll`一样。但我不知道一个指令是如何获得另一个指令的入参的，希望有大佬可以指点一下。
 
 ## 无限下拉之虚拟滚动的实现
 
@@ -305,16 +305,16 @@ export default {
 
 虚拟滚动原理如下图所示：
 
-![虚拟滚动原理](https://raw.githubusercontent.com/ivestszheng/images-store/master/img/src=http%3A%2F%2Fucc.alicdn.com%2Fpic%2Fdeveloper-ecology%2F9be845dd1e504ecb8fd26573830a0226.jpg&refer=http%3A%2F%2Fucc.alicdn.com&app=2002&size=f9999,10000&q=a80&n=0&g=0n&fmt=auto)
+![虚拟滚动原理](https://raw.githubusercontent.com/ivestszheng/images-store/master/img/20220606163358.png)
 
-可以看到视口高度是固定的，子元素的高度也是固定的，我们可以推算出一个视口最多可以看到多少个元素。只需改变列表中元素的上下间距即可实现虚拟滚动的效果。
-
-### 实现的整体思路
+可以看到视口高度是固定的，子元素的高度也是固定的，我们可以推算出一个视口最多可以看到多少个元素。只需改变列表中元素的上下空白占位即可实现虚拟滚动的效果。实现的整体思路如下：
 
 1. 计算容器最大容积数量
 2. 监听滚动事件动态截取数据
-3. 动态设置上下空白占位
-4. 下拉请求数据
+3. 动态设置上下空白占位（核心）
+4. 下拉到底部时请求数据
+5. 滚动事件节流定时器优化
+6. 设置缓冲区优化快速滚动时的白屏问题
 
 ### 计算容器最大容积数量
 
@@ -439,7 +439,7 @@ export default {
     },
     // 列表中要展示的元素集合
     shownList() {
-      return this.dataSource.slice(this.beginIndex, this.endIndex);
+      return this.dataSource.slice(this.beginIndex, this.endIndex + 1);
     },
   },
   created() {
@@ -455,12 +455,10 @@ export default {
     // 计算容器的最大容积
     getMaxVolume() {
       this.maxVolume = Math.floor(this.$refs.container.clientHeight / this.itemHeight) + 2;
-      console.log(this.maxVolume);
     },
     // 滚动行为事件,记录滚动的第一个元素索引
     handleScroll() {
       this.beginIndex = Math.floor(this.$refs.container.scrollTop / this.itemHeight);
-      console.log('benginIndex', this.beginIndex);
     },
   },
 };
@@ -469,20 +467,534 @@ export default {
 
 ### 动态设置上下空白占位
 
-## 无限下拉存在的问题与优化思路
+根据 `beginIndex`和 `endIndex`，可以动态计算出上下空白高度。而上下空白占位的实现可以有两种思路:一种是通过 `padding`填充，如[tangbc](https://github.com/tangbc)/**[vue-virtual-scroll-list](https://github.com/tangbc/vue-virtual-scroll-list)**;另一种可以 `transform`偏移来实现，如 [Akryum](https://github.com/Akryum)/**[vue-virtual-scroller](https://github.com/Akryum/vue-virtual-scroller)**。这里我采用第一种方案，具体代码如下：
 
-### 懒加载
+```vue
+<template>
+  <!-- .passive 会告诉浏览器你不想阻止事件的默认行为,以提高性能 -->
+  <div
+    class="container"
+    ref="container"
+    @scroll.passive="handleScroll"
+  >
+  <!-- 注意：增加 padding 需要给列表再包一层，不能直接加在容器上，避免改变容器的 clientHeight -->
+    <div :style="blankFilledStyle" class="group">
+      <div class="item" v-for="(item, index) in shownList" :key="index">
+        <div>{{ item.id }}</div>
+        <div>{{ item.title }}</div>
+        <div>{{ item.readTimes }}</div>
+        <div>{{ item.source }}</div>
+        <div>{{ item.date }}</div>
+      </div>
+    </div>
+  </div>
+</template>
 
-但是
+<script>
+import { generageList } from '@/mock/index';
 
-### 虚拟滚动
+export default {
+  name: 'MyOwnVirtualScrollerView',
+  data() {
+    return {
+      dataSource: [], // 数据源
+      itemHeight: 80, // 列表每项内容的高度
+      maxVolume: 0, //  容器的最大容积
+      beginIndex: 0, // 当前滚动的第一个元素索引
+    };
+  },
+  computed: {
+    // 当前滚动的最后一个元素索引
+    endIndex() {
+      let endIndex = this.beginIndex + this.maxVolume;
+      if (!this.dataSource[endIndex]) {
+        endIndex = this.dataSource.length - 1;
+      }
+      return endIndex;
+    },
+    // 列表中要展示的元素集合
+    shownList() {
+      return this.dataSource.slice(this.beginIndex, this.endIndex + 1);
+    },
+    // 计算上下空白占位高度样式
+    blankFilledStyle() {
+      return {
+        paddingTop: `${this.beginIndex * this.itemHeight}px`,
+        paddingBottom: `${(this.dataSource.length - this.endIndex - 1) * this.itemHeight}px`,
+      };
+    },
+  },
+  created() {
+    this.dataSource = generageList(1000).data;
+  },
+  mounted() {
+    this.getMaxVolume();
+    // 如果列表的高度并非固定，而是会随着当视口变化，需要增加监听事件
+    // window.onresize = () => this.getMaxVolume();
+    // window.orientationchange = () => this.getMaxVolume();
+  },
+  methods: {
+    // 计算容器的最大容积
+    getMaxVolume() {
+  
+      this.maxVolume = Math.floor(this.$refs.container.clientHeight / this.itemHeight) + 2;
+    },
+    // 滚动行为事件,记录滚动的第一个元素索引
+    handleScroll() {
+      this.beginIndex = Math.floor(this.$refs.container.scrollTop / this.itemHeight);
+    },
+  },
+};
+</script>
+
+<style lang="less" scoped>
+.container {
+  height: 500px;
+  box-sizing: border-box;
+  border: 1px solid gray;
+  width: 600px;
+  margin: 0 auto;
+  overflow-y: auto;
+}
+.item {
+  border: 1px solid orange;
+  width: 80%;
+  margin: 0 auto;
+  height: 80px;
+  box-sizing: border-box;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  div{
+    width: 100%;
+  }
+}
+.loading {
+  font-weight: bold;
+  font-size: 20px;
+  color: grey;
+  text-align: center;
+}
+</style>
+```
+
+此时表中有`1000`条数据，但是表中的`dom`元素数量始终是`8`效果如下图所示：
+![虚拟滚动的实现](https://raw.githubusercontent.com/ivestszheng/images-store/master/img/%E8%99%9A%E6%8B%9F%E6%BB%9A%E5%8A%A8%E7%9A%84%E5%AE%9E%E7%8E%B0.gif)
+
+### 下拉到底部时请求数据
+
+上面模拟的使用都是`findAll`的接口，然而实际场景中，数据量特别大有几万条的话，不做分页肯定是不合适的，修改代码如下：
+
+```vue
+<template>
+  <!-- .passive 会告诉浏览器你不想阻止事件的默认行为,以提高性能 -->
+  <div class="container" ref="container" @scroll.passive="handleScroll">
+    <!-- 注意：增加 padding 需要给列表再包一层，不能直接加在容器上，避免改变容器的 clientHeight -->
+    <div :style="blankFilledStyle" class="group">
+      <div class="item" v-for="(item, index) in shownList" :key="index">
+        <div>{{ item.id }}</div>
+        <div>{{ item.title }}</div>
+        <div>{{ item.readTimes }}</div>
+        <div>{{ item.source }}</div>
+        <div>{{ item.date }}</div>
+      </div>
+      <div class="loading" v-show="isBusy">loading.....</div>
+    </div>
+  </div>
+</template>
+
+<script>
+// import { generageList } from '@/mock/index';
+import { findByPagination } from '@/mock/index';
+
+export default {
+  name: 'MyOwnVirtualScrollerView',
+  data() {
+    return {
+      dataSource: [], // 数据源
+      itemHeight: 80, // 列表每项内容的高度
+      maxVolume: 0, //  容器的最大容积
+      beginIndex: 0, // 当前滚动的第一个元素索引
+      page: {
+        pagination: 0,
+        pageSize: 20,
+      },
+      isBusy: false, // 是否在请求数据
+    };
+  },
+  computed: {
+    // 当前滚动的最后一个元素索引
+    endIndex() {
+      let endIndex = this.beginIndex + this.maxVolume;
+      if (!this.dataSource[endIndex]) {
+        endIndex = this.dataSource.length - 1;
+      }
+      return endIndex;
+    },
+    // 列表中要展示的元素集合
+    shownList() {
+      return this.dataSource.slice(this.beginIndex, this.endIndex + 1);
+    },
+    // 计算上下空白占位高度样式
+    blankFilledStyle() {
+      return {
+        paddingTop: `${this.beginIndex * this.itemHeight}px`,
+        paddingBottom: `${(this.dataSource.length - this.endIndex - 1) * this.itemHeight}px`,
+      };
+    },
+  },
+  created() {
+    // this.dataSource = generageList(20).data;
+    this.addItemsToDataSource();
+  },
+  mounted() {
+    this.getMaxVolume();
+    // 如果列表的高度并非固定，而是会随着当视口变化，需要增加监听事件
+    // window.onresize = () => this.getMaxVolume();
+    // window.orientationchange = () => this.getMaxVolume();
+  },
+  methods: {
+    // 计算容器的最大容积
+    getMaxVolume() {
+      this.maxVolume = Math.floor(this.$refs.container.clientHeight / this.itemHeight) + 2;
+    },
+    // 滚动行为事件,记录滚动的第一个元素索引
+    handleScroll() {
+      this.beginIndex = Math.floor(this.$refs.container.scrollTop / this.itemHeight);
+      if (this.beginIndex + this.maxVolume > this.dataSource.length - 1 && !this.isBusy) {
+        console.log('滚动到底部了');
+        // 追加请求新的数据
+        this.isBusy = true;
+        // setTimeout 模拟异步,本来想直接在 mockjs 直接返回 promise 的,但是好像不行
+        setTimeout(() => {
+          this.addItemsToDataSource();
+          this.isBusy = false;
+        }, 500);
+      }
+    },
+    addItemsToDataSource() {
+      const { data: { list } } = findByPagination(this.page.pagination, this.page.pageSize);
+      this.dataSource = [...this.dataSource, ...list];
+      this.page.pagination += 1;
+    },
+  },
+};
+</script>
+```
+
+### 滚动事件节流定时器优化
+
+通过打印可以看到滚动事件触发频率非常高，如下图所示：
+
+![滚动事件触发频率高](https://raw.githubusercontent.com/ivestszheng/images-store/master/img/%E6%BB%9A%E5%8A%A8%E4%BA%8B%E4%BB%B6%E8%A7%A6%E5%8F%91%E9%A2%91%E7%8E%87%E9%AB%98.gif)
+
+修改代码如下：
+
+```js
+  methods: {
+// 滚动行为事件,记录滚动的第一个元素索引
+    handleScroll() {
+      if (!this.isScrolling) {
+        this.isScrolling = true;
+        // 时间间隔 30 ms,比较合适，太大会有很明显的白屏
+        const scrollerTimer = setTimeout(() => {
+          this.isScrolling = false;
+          clearTimeout(scrollerTimer);
+        }, 30);
+        console.log('触发滚动事件');
+
+        this.setDataBeginIndex();
+      }
+    },
+    // 执行数据设置的相关任务，滚动时间的具体行为
+    setDataBeginIndex() {
+      this.beginIndex = Math.floor(this.$refs.container.scrollTop / this.itemHeight);
+      if (this.beginIndex + this.maxVolume > this.dataSource.length - 1 && !this.isBusy) {
+        console.log('滚动到底部了');
+        // 追加请求新的数据
+        this.isBusy = true;
+        // setTimeout 模拟异步,本来想直接在 mockjs 直接返回 promise 的,但是好像不行
+        setTimeout(() => {
+          this.addItemsToDataSource();
+          this.isBusy = false;
+        }, 500);
+      }
+    },
+  }
+```
+
+### 设置缓冲区优化快速滚动时的白屏问题
+
+当设备的渲染性能差的时候，当快速滚动时用户可能会看到白屏，普遍的优化方案是增加缓冲区。也就是在计算展示列表时，多渲染一屏或多屏的数据，修改代码如下：
+
+```js
+    // 列表中要展示的元素集合
+    shownList() {
+      let beginIndex = 0;
+      beginIndex = this.beginIndex <= this.maxVolume ? 0 : this.beginIndex - this.maxVolume;
+      // return this.dataSource.slice(this.beginIndex, this.endIndex + 1);
+      return this.dataSource.slice(beginIndex, this.endIndex + 1);
+    },
+    // 计算上下空白占位高度样式
+    blankFilledStyle() {
+      let beginIndex = 0;
+      beginIndex = this.beginIndex <= this.maxVolume ? 0 : this.beginIndex - this.maxVolume;
+
+      return {
+        paddingTop: `${beginIndex * this.itemHeight}px`,
+        paddingBottom: `${(this.dataSource.length - this.endIndex - 1) * this.itemHeight}px`,
+      };
+    },
+```
+
+但是白屏问题从根本上是无法解决的，因为这与设备的渲染性能有关。我看到有一些开发者会限制用户的最大滚动速度以避免这个问题。
+
+### Element-ui table实现虚拟滚动
+
+详情阅读csdn的这篇文章[《element表格组件实现虚拟滚动，解决卡顿问题》](https://blog.csdn.net/qq_36733603/article/details/117821184)，代码如下：
+
+```vue
+<template>
+  <el-table
+    :data="tableData"
+    ref="tableRef"
+    style="width: 900px;margin: 0 auto;"
+    max-height="380"
+    border
+    stripe
+    class="myTable"
+  >
+    <el-table-column
+      prop="date"
+      label="必要元素："
+      min-width="150"
+      align="center"
+      fixed="left"
+    >
+    </el-table-column>
+    <el-table-column label="每一行高度必须相同">
+      <el-table-column
+        prop="name"
+        label="class不能为【myTable】"
+        min-width="180"
+        align="center"
+      >
+      </el-table-column>
+      <el-table-column label="ref不能为【tableRef】">
+        <el-table-column
+          prop="province"
+          label="省份"
+          min-width="150"
+          align="center"
+        >
+        </el-table-column>
+        <el-table-column
+          prop="city"
+          label="市区"
+          min-width="150"
+          align="center"
+        >
+        </el-table-column>
+        <el-table-column
+          prop="address"
+          label="地址"
+          min-width="150"
+          align="center"
+        >
+        </el-table-column>
+      </el-table-column>
+    </el-table-column>
+    <el-table-column label="操作" fixed="right" min-width="160" align="center">
+      <template>
+        <el-button size="mini">编辑</el-button>
+        <el-button size="mini" type="danger">删除</el-button>
+      </template>
+    </el-table-column>
+  </el-table>
+</template>
+
+<script>
+export default {
+  data() {
+    return {
+      tableData: [],
+      saveDATA: [],
+      tableRef: null,
+      tableWarp: null,
+      fixLeft: null,
+      fixRight: null,
+      tableFixedLeft: null,
+      tableFixedRight: null,
+      scrollTop: 0,
+      num: 0,
+      start: 0,
+      end: 42, // 3倍的pageList
+      starts: 0, // 备份[保持与上一样]
+      ends: 42, // 备份[保持与上一样]
+      pageList: 14, // 一屏显示
+      itemHeight: 41, // 每一行高度
+      timeOut: 400, // 延迟
+    };
+  },
+  created() {
+    this.init();
+  },
+  mounted() {
+    this.$nextTick(() => {
+      this.tableRef = this.$refs.tableRef.bodyWrapper;
+      this.tableFixedLeft = document.querySelector(
+        '.el-table .el-table__fixed .el-table__fixed-body-wrapper',
+      );
+      this.tableFixedRight = document.querySelector(
+        '.el-table .el-table__fixed-right .el-table__fixed-body-wrapper',
+      );
+      /**
+       * fixed-left | 主体 | fixed-right
+       */
+      // 主体改造
+      const divWarpPar = document.createElement('div');
+      divWarpPar.style.height = `${this.saveDATA.length * this.itemHeight}px`;
+      const divWarpChild = document.createElement('div');
+      divWarpChild.className = 'fix-warp';
+      divWarpChild.append(this.tableRef.children[0]);
+      divWarpPar.append(divWarpChild);
+      this.tableRef.append(divWarpPar);
+
+      // left改造
+      const divLeftPar = document.createElement('div');
+      divLeftPar.style.height = `${this.saveDATA.length * this.itemHeight}px`;
+      const divLeftChild = document.createElement('div');
+      divLeftChild.className = 'fix-left';
+      // eslint-disable-next-line no-unused-expressions
+      this.tableFixedLeft
+        && divLeftChild.append(this.tableFixedLeft.children[0]);
+      divLeftPar.append(divLeftChild);
+      // eslint-disable-next-line no-unused-expressions
+      this.tableFixedLeft && this.tableFixedLeft.append(divLeftPar);
+
+      // right改造
+      const divRightPar = document.createElement('div');
+      divRightPar.style.height = `${this.saveDATA.length * this.itemHeight}px`;
+      const divRightChild = document.createElement('div');
+      divRightChild.className = 'fix-right';
+      // eslint-disable-next-line no-unused-expressions
+      this.tableFixedRight
+        && divRightChild.append(this.tableFixedRight.children[0]);
+      divRightPar.append(divRightChild);
+      // eslint-disable-next-line no-unused-expressions
+      this.tableFixedRight && this.tableFixedRight.append(divRightPar);
+
+      // 被设置的transform元素
+      this.tableWarp = document.querySelector(
+        '.el-table .el-table__body-wrapper .fix-warp',
+      );
+      this.fixLeft = document.querySelector(
+        '.el-table .el-table__fixed .el-table__fixed-body-wrapper .fix-left',
+      );
+      this.fixRight = document.querySelector(
+        '.el-table .el-table__fixed-right .el-table__fixed-body-wrapper .fix-right',
+      );
+
+      this.tableRef.addEventListener('scroll', this.onScroll);
+    });
+  },
+  methods: {
+    init() {
+      this.saveDATA = [];
+      for (let i = 0; i < 10000; i += 1) {
+        this.saveDATA.push({
+          date: i,
+          name: `王小虎${i}`,
+          address: '1518',
+          province: 'github:',
+          city: 'divcssjs',
+          zip: `divcssjs${i}`,
+        });
+      }
+      this.tableData = this.saveDATA.slice(this.start, this.end);
+    },
+    onScroll() {
+      this.scrollTop = this.tableRef.scrollTop;
+      this.num = Math.floor(this.scrollTop / (this.itemHeight * this.pageList));
+    },
+  },
+  watch: {
+    num(newV) {
+      if (newV > 1) {
+        this.start = (newV - 1) * this.pageList;
+        this.end = (newV + 2) * this.pageList;
+        setTimeout(() => {
+          this.tableWarp.style.transform = `translateY(${this.start
+            * this.itemHeight}px)`;
+          if (this.fixLeft) {
+            this.fixLeft.style.transform = `translateY(${this.start
+              * this.itemHeight}px)`;
+          }
+          if (this.fixRight) {
+            this.fixRight.style.transform = `translateY(${this.start
+              * this.itemHeight}px)`;
+          }
+          this.tableData = this.saveDATA.slice(this.start, this.end);
+        }, this.timeOut);
+      } else {
+        setTimeout(() => {
+          this.tableData = this.saveDATA.slice(this.starts, this.ends);
+          this.tableWarp.style.transform = 'translateY(0px)';
+          if (this.fixLeft) {
+            this.fixLeft.style.transform = 'translateY(0px)';
+          }
+          if (this.fixRight) {
+            this.fixRight.style.transform = 'translateY(0px)';
+          }
+        }, this.timeOut);
+      }
+    },
+  },
+};
+</script>
+<style lang="less" scoped>
+.myTable {
+  /deep/ td {
+    padding: 6px 0 !important;
+  }
+}
+
+/*滚动条样式*/
+
+/deep/ .el-table__body-wrapper::-webkit-scrollbar {
+  /*滚动条整体样式*/
+  width: 6px;
+  /*高宽分别对应横竖滚动条的尺寸*/
+  height: 8px;
+}
+
+/deep/ .el-table__body-wrapper::-webkit-scrollbar-thumb {
+  /*滚动条里面小方块*/
+  border-radius: 2px;
+  background: #666;
+}
+
+/deep/ .el-table__body-wrapper::-webkit-scrollbar-track {
+  /*滚动条里面轨道*/
+  background: #ccc;
+}
+</style>
+
+```
+
+核心原理一般无二，需要修改`table`的内部结构与通过`transform`来改变上下空白占位。不过这段代码有个一个小问题，代码中应该使用`Element.querySelector`而不是`document.querySelector`，避免页面中有多个`table`时影响功能。当然，可以的话，我更倾向于直接使用[`vxe-table`](https://github.com/x-extends/vxe-table)这样本身自带虚拟滚动的组件。
 
 ## 总结
 
-以上所有代码均已放在仓库 [ivestszheng/virtual-scroll-demo](https://github.com/ivestszheng/virtual-scroll-demo)。
+在绝大多数场景，懒加载可以很好地解决客户端与服务端压力，缺点是滚动条是“虚假的”，无法滚动到底部。虚拟滚动的白屏问题无法从根本上解决，但是真正大量数据渲染场景下，虚拟滚动也许是唯一的解决方案。
+
+## Demo地址
+
+[ivestszheng/virtual-scroll-demo](https://github.com/ivestszheng/virtual-scroll-demo)。
 
 ## 参考资料
 
+1. [bilibili - Vue 移动端企业级实战 - 长列表虚拟滚动高阶插件封装](https://www.bilibili.com/video/BV1ab4y127Hp?p=1)
 1. [SegmentFault - 精读《高性能表格》](https://segmentfault.com/a/1190000039808261)
 2. [掘金 - 虚拟列表，我真的会了！！！](https://juejin.cn/post/7085941958228574215#comment)
 3. [CSDN - element表格组件实现虚拟滚动，解决卡顿问题](https://blog.csdn.net/qq_36733603/article/details/117821184)

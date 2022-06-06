@@ -1,18 +1,23 @@
 <template>
-<!-- .passive 会告诉浏览器你不想阻止事件的默认行为,以提高性能 -->
+  <!-- .passive 会告诉浏览器你不想阻止事件的默认行为,以提高性能 -->
   <div class="container" ref="container" @scroll.passive="handleScroll">
-    <div class="content" v-for="(item, index) in shownList" :key="index">
-      <div class="content-item">{{ item.id }}</div>
-      <div class="content-item">{{ item.title }}</div>
-      <div class="content-item">{{ item.readTimes }}</div>
-      <div class="content-item">{{ item.source }}</div>
-      <div class="content-item">{{ item.date }}</div>
+    <!-- 注意：增加 padding 需要给列表再包一层，不能直接加在容器上，避免改变容器的 clientHeight -->
+    <div :style="blankFilledStyle" class="group">
+      <div class="item" v-for="(item, index) in shownList" :key="index">
+        <div>{{ item.id }}</div>
+        <div>{{ item.title }}</div>
+        <div>{{ item.readTimes }}</div>
+        <div>{{ item.source }}</div>
+        <div>{{ item.date }}</div>
+      </div>
+      <div class="loading" v-show="isBusy">loading.....</div>
     </div>
   </div>
 </template>
 
 <script>
-import { generageList } from '@/mock/index';
+// import { generageList } from '@/mock/index';
+import { findByPagination } from '@/mock/index';
 
 export default {
   name: 'MyOwnVirtualScrollerView',
@@ -22,6 +27,12 @@ export default {
       itemHeight: 80, // 列表每项内容的高度
       maxVolume: 0, //  容器的最大容积
       beginIndex: 0, // 当前滚动的第一个元素索引
+      page: {
+        pagination: 0,
+        pageSize: 20,
+      },
+      isBusy: false, // 是否在请求数据
+      isScrolling: false, // 是否正在滚动
     };
   },
   computed: {
@@ -35,11 +46,25 @@ export default {
     },
     // 列表中要展示的元素集合
     shownList() {
-      return this.dataSource.slice(this.beginIndex, this.endIndex);
+      let beginIndex = 0;
+      beginIndex = this.beginIndex <= this.maxVolume ? 0 : this.beginIndex - this.maxVolume;
+      // return this.dataSource.slice(this.beginIndex, this.endIndex + 1);
+      return this.dataSource.slice(beginIndex, this.endIndex + 1);
+    },
+    // 计算上下空白占位高度样式
+    blankFilledStyle() {
+      let beginIndex = 0;
+      beginIndex = this.beginIndex <= this.maxVolume ? 0 : this.beginIndex - this.maxVolume;
+
+      return {
+        paddingTop: `${beginIndex * this.itemHeight}px`,
+        paddingBottom: `${(this.dataSource.length - this.endIndex - 1) * this.itemHeight}px`,
+      };
     },
   },
   created() {
-    this.dataSource = generageList(1000).data;
+    // this.dataSource = generageList(20).data;
+    this.addItemsToDataSource();
   },
   mounted() {
     this.getMaxVolume();
@@ -51,12 +76,39 @@ export default {
     // 计算容器的最大容积
     getMaxVolume() {
       this.maxVolume = Math.floor(this.$refs.container.clientHeight / this.itemHeight) + 2;
-      console.log(this.maxVolume);
     },
     // 滚动行为事件,记录滚动的第一个元素索引
     handleScroll() {
+      if (!this.isScrolling) {
+        this.isScrolling = true;
+        // 时间间隔 30 ms,比较合适，太大会有很明显的白屏
+        const scrollerTimer = setTimeout(() => {
+          this.isScrolling = false;
+          clearTimeout(scrollerTimer);
+        }, 30);
+        console.log('触发滚动事件');
+
+        this.setDataBeginIndex();
+      }
+    },
+    // 执行数据设置的相关任务，滚动时间的具体行为
+    setDataBeginIndex() {
       this.beginIndex = Math.floor(this.$refs.container.scrollTop / this.itemHeight);
-      console.log('benginIndex', this.beginIndex);
+      if (this.beginIndex + this.maxVolume > this.dataSource.length - 1 && !this.isBusy) {
+        console.log('滚动到底部了');
+        // 追加请求新的数据
+        this.isBusy = true;
+        // setTimeout 模拟异步,本来想直接在 mockjs 直接返回 promise 的,但是好像不行
+        setTimeout(() => {
+          this.addItemsToDataSource();
+          this.isBusy = false;
+        }, 500);
+      }
+    },
+    addItemsToDataSource() {
+      const { data: { list } } = findByPagination(this.page.pagination, this.page.pageSize);
+      this.dataSource = [...this.dataSource, ...list];
+      this.page.pagination += 1;
     },
   },
 };
@@ -65,12 +117,13 @@ export default {
 <style lang="less" scoped>
 .container {
   height: 500px;
+  box-sizing: border-box;
   border: 1px solid gray;
   width: 600px;
   margin: 0 auto;
-  overflow: auto;
+  overflow-y: auto;
 }
-.content {
+.item {
   border: 1px solid orange;
   width: 80%;
   margin: 0 auto;
@@ -79,7 +132,7 @@ export default {
   display: flex;
   align-items: center;
   justify-content: center;
-  &-item {
+  div {
     width: 100%;
   }
 }
