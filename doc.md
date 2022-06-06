@@ -223,7 +223,7 @@ export default {
 
 上面的案例都是在自己创建的列表，还有比较常见的是需要组件库中的表格组件实现懒加载，这里以 `element-ui`的 `table`为例。
 
-![table 无限滚动](https://raw.githubusercontent.com/ivestszheng/images-store/master/img/table 无限滚动.gif)
+![table 无限滚动](<https://raw.githubusercontent.com/ivestszheng/images-store/master/img/table> 无限滚动.gif)
 
 大体的思路与上面的实现一致，不过需要需要获取正确的容器——选择器为 `.el-table__body-wrapper`的 `div`。考虑到复用性，使用了自定义指令，具体代码如下：
 
@@ -322,7 +322,7 @@ export default {
 
 ### 计算容器最大容积数量
 
-在列表内容等高的情况下，容器最大容积数量 = Math.floor(容器的高度 / 列表每项内容的高度) + 2。之所以要 `+2` 是因为视口中第一项和最后一项可能并不完整，如下图所示：
+在列表内容等高的情况下，容器最大容积数量 = Math.floor(容器的高度 / 列表每项内容的高度) + 2。之所以要 `+2` 是因为列表中第一项和最后一项可能并不完整，如下图所示：
 
 ![计算容器最大容积数量1](https://raw.githubusercontent.com/ivestszheng/images-store/master/img/image-20220605220258304.png)
 
@@ -986,7 +986,7 @@ export default {
 
 ```
 
-核心原理一般无二，需要修改`table`的内部结构与通过`transform`来改变上下空白占位。不过这段代码有个一个小问题，代码中应该使用`Element.querySelector`而不是`document.querySelector`，避免页面中有多个`table`时影响功能。当然，可以的话，我更倾向于直接使用[`vxe-table`](https://github.com/x-extends/vxe-table)这样本身自带虚拟滚动的组件。
+核心原理一般无二，需要修改`table`的内部结构与通过`transform`来改变上下空白占位。不过这段代码有个一个小问题，代码中应该使用`Element.querySelector`而不是`document.querySelector`，避免页面中有多个`table`时影响功能。可以的话，我更倾向于直接使用[`vxe-table`](https://github.com/x-extends/vxe-table)这样本身自带虚拟滚动的组件。
 
 ## 总结
 
