@@ -24,7 +24,7 @@ export default {
   data() {
     return {
       dataSource: [], // 数据源
-      itemHeight: 50, // 列表每项内容的高度
+      estimatedHeight: 40, // 列表每项内容的高度
       maxVolume: 0, //  容器的最大容积
       beginIndex: 0, // 当前滚动的第一个元素索引
       page: {
@@ -34,6 +34,7 @@ export default {
       isBusy: false, // 是否在请求数据
       isScrolling: false, // 是否正在滚动
       scrollTop: 0, // 记录滚动后距离顶部的距离
+      positions: [], // 记录元素的位置
     };
   },
   // 被 keep-alive 缓存的组件激活时调用
@@ -54,25 +55,25 @@ export default {
     },
     // 列表中要展示的元素集合
     shownList() {
-      let beginIndex = 0;
-      beginIndex = this.beginIndex <= this.maxVolume ? 0 : this.beginIndex - this.maxVolume;
-      // return this.dataSource.slice(this.beginIndex, this.endIndex + 1);
-      return this.dataSource.slice(beginIndex, this.endIndex + 1);
+      return this.dataSource.slice(this.beginIndex, this.endIndex + 1);
     },
     // 计算上下空白占位高度样式
     blankFilledStyle() {
-      let beginIndex = 0;
-      beginIndex = this.beginIndex <= this.maxVolume ? 0 : this.beginIndex - this.maxVolume;
+      const beginOffset = this.beginIndex >= 1 ? this.positions[this.beginIndex - 1].bottom : 0;
 
       return {
-        paddingTop: `${beginIndex * this.itemHeight}px`,
-        paddingBottom: `${(this.dataSource.length - this.endIndex - 1) * this.itemHeight}px`,
+        paddingTop: `${beginOffset}px`,
+        paddingBottom: `${(this.dataSource.length - this.endIndex - 1) * this.estimatedHeight}px`,
       };
+    },
+    // 列表总高度
+    listHeight() {
+      return this.positions[this.positions.length - 1].bottom;
     },
   },
   created() {
     // this.dataSource = generageList(20).data;
-    this.addItemsToDataSource();
+    this.addItemsToDataSource(true);
   },
   mounted() {
     this.getMaxVolume();
@@ -83,7 +84,7 @@ export default {
   methods: {
     // 计算容器的最大容积
     getMaxVolume() {
-      this.maxVolume = Math.floor(this.$refs.container.clientHeight / this.itemHeight) + 2;
+      this.maxVolume = Math.floor(this.$refs.container.clientHeight / this.estimatedHeight) + 2;
     },
     // 滚动行为事件,记录滚动的第一个元素索引
     handleScroll() {
@@ -102,7 +103,8 @@ export default {
     // 执行数据设置的相关任务，滚动事件的具体行为
     setDataBeginIndex() {
       this.scrollTop = this.$refs.container.scrollTop;
-      this.beginIndex = Math.floor(this.$refs.container.scrollTop / this.itemHeight);
+      this.beginIndex = this.getStartIndex(this.scrollTop);
+
       if (this.beginIndex + this.maxVolume > this.dataSource.length - 1 && !this.isBusy) {
         console.log('滚动到底部了');
         // 追加请求新的数据
@@ -114,10 +116,51 @@ export default {
         }, 500);
       }
     },
-    addItemsToDataSource() {
+    addItemsToDataSource(isInit) {
       const { data: { list } } = findByPagination2(this.page.pagination, this.page.pageSize);
       this.dataSource = [...this.dataSource, ...list];
+      this.addItemsToPositions(list, isInit);
       this.page.pagination += 1;
+    },
+    addItemsToPositions(list, isInit = false) {
+      const items = list.map((item, index) => {
+        const newIndex = isInit ? index : this.dataSource.length - this.page.pageSize + index;
+
+        return {
+          index: newIndex,
+          height: this.estimatedHeight,
+          top: newIndex * this.estimatedHeight,
+          bottom: (newIndex + 1) * this.estimatedHeight,
+        };
+      });
+      this.positions = [...this.positions, ...items];
+    },
+    // 获取列表起始索引
+    getStartIndex(scrollTop = 0) {
+      return this.binarySearch(this.positions, scrollTop);
+    },
+    // 二分法查找
+    binarySearch(list, value) {
+      let begin = 0;
+      let end = list.length - 1;
+      let tempIndex = null;
+
+      while (begin <= end) {
+        const midIndex = Math.floor(((begin + end) / 2));
+        const midValue = list[midIndex].bottom;
+
+        if (midValue === value) {
+          return midIndex + 1;
+        } if (midValue < value) {
+          begin = midIndex + 1;
+        } else if (midValue > value) {
+          if (tempIndex === null || tempIndex > midIndex) {
+            tempIndex = midIndex;
+          }
+          end -= 1;
+        }
+      }
+      return tempIndex;
     },
   },
 };
