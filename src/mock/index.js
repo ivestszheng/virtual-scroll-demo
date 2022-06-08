@@ -55,7 +55,7 @@ function findByPagination2(pagination = 0, pageSize = 5) {
     [`list|${endIndex - beginIndex}`]: [{
       // ID 自增
       'id|+1': beginIndex + 1,
-      title: '@ctitle(5,80)',
+      title: '@ctitle(5,60)',
       readTimes: '@natural(0,99999)',
       source: '@ctitle(3,10)',
       date: '@date("yyyy-MM-dd")',

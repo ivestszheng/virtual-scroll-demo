@@ -39,7 +39,6 @@ export default {
   },
   // 被 keep-alive 缓存的组件激活时调用
   activated() {
-    console.log('scrollTop', this.scrollTop);
     this.$nextTick(() => {
       this.$refs.container.scrollTop = this.scrollTop;
     });
@@ -60,10 +59,12 @@ export default {
     // 计算上下空白占位高度样式
     blankFilledStyle() {
       const beginOffset = this.beginIndex >= 1 ? this.positions[this.beginIndex - 1].bottom : 0;
+      const paddingBottom = this.dataSource.length * this.estimatedHeight
+- this.positions[this.endIndex].bottom;
 
       return {
         paddingTop: `${beginOffset}px`,
-        paddingBottom: `${(this.dataSource.length - this.endIndex - 1) * this.estimatedHeight}px`,
+        paddingBottom: `${paddingBottom}px`,
       };
     },
     // 列表总高度
@@ -77,9 +78,6 @@ export default {
   },
   mounted() {
     this.getMaxVolume();
-    // 如果列表的高度并非固定，而是会随着当视口变化，需要增加监听事件
-    // window.onresize = () => this.getMaxVolume();
-    // window.orientationchange = () => this.getMaxVolume();
   },
   methods: {
     // 计算容器的最大容积
@@ -104,7 +102,9 @@ export default {
     setDataBeginIndex() {
       this.scrollTop = this.$refs.container.scrollTop;
       this.beginIndex = this.getStartIndex(this.scrollTop);
-
+      console.log('scrollTop', this.scrollTop);
+      console.log('beiginIndex', this.beginIndex);
+      console.log('positions', this.positions);
       if (this.beginIndex + this.maxVolume > this.dataSource.length - 1 && !this.isBusy) {
         console.log('滚动到底部了');
         // 追加请求新的数据
