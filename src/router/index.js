@@ -38,6 +38,11 @@ const routes = [
     name: 'MyOwnVirtualScroller',
     component: () => import('@/views/MyOwnVirtualScrollerView.vue'),
   },
+  {
+    path: '/my-own-virtual-scroller2',
+    name: 'MyOwnVirtualScroller2',
+    component: () => import('@/views/MyOwnVirtualScrollerView2.vue'),
+  },
 ];
 
 const router = new VueRouter({

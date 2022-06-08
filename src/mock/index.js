@@ -48,4 +48,28 @@ function findByPagination(pagination = 0, pageSize = 5) {
   };
 }
 
-export { generageList, findByPagination };
+function findByPagination2(pagination = 0, pageSize = 5) {
+  const beginIndex = pagination * pageSize;
+  const endIndex = beginIndex + pageSize;
+  const { list } = Mock.mock({
+    [`list|${endIndex - beginIndex}`]: [{
+      // ID 自增
+      'id|+1': beginIndex + 1,
+      title: '@ctitle(5,80)',
+      readTimes: '@natural(0,99999)',
+      source: '@ctitle(3,10)',
+      date: '@date("yyyy-MM-dd")',
+    }],
+  });
+
+  return {
+    code: 200,
+    data: {
+      list,
+      pagination,
+      pageSize,
+    },
+  };
+}
+
+export { generageList, findByPagination, findByPagination2 };

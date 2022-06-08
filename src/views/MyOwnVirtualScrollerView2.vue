@@ -17,14 +17,14 @@
 
 <script>
 // import { generageList } from '@/mock/index';
-import { findByPagination } from '@/mock/index';
+import { findByPagination2 } from '@/mock/index';
 
 export default {
   name: 'MyOwnVirtualScrollerView',
   data() {
     return {
       dataSource: [], // 数据源
-      itemHeight: 80, // 列表每项内容的高度
+      itemHeight: 50, // 列表每项内容的高度
       maxVolume: 0, //  容器的最大容积
       beginIndex: 0, // 当前滚动的第一个元素索引
       page: {
@@ -115,7 +115,7 @@ export default {
       }
     },
     addItemsToDataSource() {
-      const { data: { list } } = findByPagination(this.page.pagination, this.page.pageSize);
+      const { data: { list } } = findByPagination2(this.page.pagination, this.page.pageSize);
       this.dataSource = [...this.dataSource, ...list];
       this.page.pagination += 1;
     },
@@ -136,7 +136,7 @@ export default {
   border: 1px solid orange;
   width: 80%;
   margin: 0 auto;
-  height: 80px;
+  height: auto;
   box-sizing: border-box;
   display: flex;
   align-items: center;
