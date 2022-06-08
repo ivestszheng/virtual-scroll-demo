@@ -7,7 +7,7 @@
       <router-link to="/vue-virtual-scroller">VueVirtualScroller 实现虚拟滚动</router-link> |
       <router-link to="/table-virtual-scroller">饿了么表格实现虚拟滚动</router-link> |
       <router-link to="/my-own-virtual-scroller">自己实现虚拟滚动</router-link> |
-      <router-link to="/my-own-virtual-scroller2">不定高列表的虚拟滚动</router-link>
+      <router-link to="/my-own-virtual-scroller2">transfrom 实现不定高列表的虚拟滚动</router-link>
     </nav>
     <keep-alive>
       <router-view/>
