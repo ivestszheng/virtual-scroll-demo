@@ -1,7 +1,5 @@
 <!--
  * @Descripttion: 代码原地址 https://github.com/chenqf/vue-virtual-listview
- * @Date: 2022-06-08 22:20:29
- * @LastEditTime: 2022-06-08 22:48:29
 -->
 <template>
   <div
